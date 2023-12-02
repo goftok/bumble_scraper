@@ -1,5 +1,5 @@
 from enum import Enum as PyEnum
-from sqlalchemy import create_engine, Column, Integer, String, Text, BLOB, ForeignKey, Index, Enum
+from sqlalchemy import create_engine, Column, Integer, String, Text, BLOB, ForeignKey, Index, Enum, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
@@ -22,7 +22,13 @@ class MainInformationModel(Base):
     gender = Column(Enum(Gender))
     name = Column(String(255))
     age = Column(Integer)
+    city = Column(String(255))
+    education = Column(String(255))
+    occupation = Column(String(255))
     description = Column(Text)
+    badges = Column(Text)
+    verification = Column(Boolean)
+    script_version = Column(String(255))
 
     # Relationship to images
     images = relationship("ImagesModel", back_populates="main_info")
@@ -35,6 +41,7 @@ class ImagesModel(Base):
     id = Column(Integer, primary_key=True)
     main_info_id = Column(Integer, ForeignKey("main_information.id"))
     image_data = Column(BLOB)
+    image_link = Column(String(255))
 
     # Relationship to main information
     main_info = relationship("MainInformationModel", back_populates="images")

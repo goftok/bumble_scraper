@@ -9,6 +9,10 @@ readme = "README.md"
 python = "^3.11"
 pillow = "^10.1.0"
 sqlalchemy = "^2.0.23"
+selenium = "^4.15.2"
+python-dotenv = "^1.0.0"
+rich = "^13.7.0"
+requests = "^2.31.0"
 
 
 [build-system]
