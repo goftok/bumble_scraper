@@ -2,12 +2,12 @@ import os
 import json
 import requests
 
-from io import BytesIO
 from selenium import webdriver
 from dotenv import load_dotenv
 from rich.console import Console
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 from models import MainInformationModel, ImagesModel, Gender, get_session
 from cookies import check_and_load_cookies, save_cookies
@@ -15,13 +15,14 @@ from image import process_image
 
 load_dotenv()
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 LIMIT = 100
 console = Console()
 
 # Get the path to the chromedriver executable
 chrome_driver_path = os.getenv("CHROME_DRIVER_PATH")
 chrome_profile_path = os.getenv("CHROME_PROFILE_PATH")
+profile_name = os.getenv("PROFILE_NAME")
 bumble_path = r"https://bumble.com/"
 
 console.print("Starting Bumble bot...", style="bold green")
@@ -30,8 +31,8 @@ console.print(f"Chrome profile path: {chrome_profile_path}")
 
 # Initialize the chrome options
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--user-data-dir=/Users/goftok/Library/Application Support/Google/Chrome")
-chrome_options.add_argument("--profile-directory=Default")
+chrome_options.add_argument(f"--user-data-dir={chrome_profile_path}")
+chrome_options.add_argument(f"--profile-directory={profile_name}")
 
 # Initialize the chrome service
 chrome_service = Service(executable_path=chrome_driver_path)
@@ -73,25 +74,17 @@ gender_enum = Gender(gender_value)
 
 while LIMIT > 0:
     # wait for the page to load
+    console.print("Starting to process number " + str(LIMIT), style="bold green")
     driver.implicitly_wait(4)
 
     image_urls = []
 
-    images_divs = driver.find_elements(by="class name", value="encounters-album__story")
+    images_divs = driver.find_elements(By.CLASS_NAME, value="media-box__picture-image")
 
     # Iterate over each story element and find images within
     for image_div in images_divs:
-        images = image_div.find_elements(By.TAG_NAME, "img")
-        for image in images:
-            src = image.get_attribute("src")
-
-            # Check if the src starts with the desired URL
-            if (
-                src
-                and src.startswith("https://fr1.bumbcdn.com/")
-                and not src.startswith("https://fr1.bumbcdn.com/i/big/assets/")
-            ):
-                image_urls.append(src)
+        src = image_div.get_attribute("src")
+        image_urls.append(src)
 
     name, age, city, education, occupation, description, verification = None, None, None, None, None, None, None
 
@@ -218,15 +211,15 @@ while LIMIT > 0:
     # input("Press enter to continue...")
 
     # Click the button
-    button = driver.find_element(By.CSS_SELECTOR, "[data-qa-role='encounters-action-dislike']")
-    if not button:
+    try:
+        button = driver.find_element(By.CSS_SELECTOR, "[data-qa-role='encounters-action-dislike']")
+        button.click()
+    except NoSuchElementException:
         input("No button found. Press enter to continue...")
 
-    button.click()
-
-    # if input is q then quit
     # if input("Press q to quit, any other key to continue: ") == "q":
     #     break
+
     LIMIT -= 1
 
 
