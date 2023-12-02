@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "db-bot"
+version = "0.1.0"
+description = ""
+authors = ["goftok"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pillow = "^10.1.0"
+sqlalchemy = "^2.0.23"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
