@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import requests
 
 from selenium import webdriver
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
 from models import MainInformationModel, ImagesModel, Gender, get_session
@@ -15,23 +17,24 @@ from image import process_image
 
 load_dotenv()
 
-VERSION = "0.1.1"
+VERSION = "0.2.0"
 LIMIT = 100
 console = Console()
 
 # Get the path to the chromedriver executable
 chrome_driver_path = os.getenv("CHROME_DRIVER_PATH")
-chrome_profile_path = os.getenv("CHROME_PROFILE_PATH")
+chrome_path = os.getenv("CHROME_PATH")
 profile_name = os.getenv("PROFILE_NAME")
 bumble_path = r"https://bumble.com/"
 
 console.print("Starting Bumble bot...", style="bold green")
 console.print(f"Chrome driver path: {chrome_driver_path}")
-console.print(f"Chrome profile path: {chrome_profile_path}")
+console.print(f"Chrome path: {chrome_path}")
+console.print(f"Profile name: {profile_name}")
 
 # Initialize the chrome options
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument(f"--user-data-dir={chrome_profile_path}")
+chrome_options.add_argument(f"--user-data-dir={chrome_path}")
 chrome_options.add_argument(f"--profile-directory={profile_name}")
 
 # Initialize the chrome service
@@ -72,11 +75,26 @@ gender_value = int(gender_input)
 # Map the integer value to the corresponding Gender enum
 gender_enum = Gender(gender_value)
 
+"""
+Some issues with the code (Probelm 1). When we trying to get the image urls, we are getting additional
+urla from the previous iteration. TODO
+"""
+prev_url = []
+image_urls = []
+
+
 while LIMIT > 0:
     # wait for the page to load
     console.print("Starting to process number " + str(LIMIT), style="bold green")
-    driver.implicitly_wait(4)
 
+    driver.implicitly_wait(2)
+
+    body = driver.find_element(By.TAG_NAME, "body")
+    for i in range(6):
+        time.sleep(0.5)
+        body.send_keys(Keys.ARROW_DOWN)
+
+    prev_url = image_urls
     image_urls = []
 
     images_divs = driver.find_elements(By.CLASS_NAME, value="media-box__picture-image")
@@ -84,7 +102,9 @@ while LIMIT > 0:
     # Iterate over each story element and find images within
     for image_div in images_divs:
         src = image_div.get_attribute("src")
-        image_urls.append(src)
+        # TODO (Probelm 1)
+        if src not in prev_url:
+            image_urls.append(src)
 
     name, age, city, education, occupation, description, verification = None, None, None, None, None, None, None
 

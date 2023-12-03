@@ -161,5 +161,6 @@ cython_debug/
 
 
 # own
+.DS_Store
 database.db
 cookies.json
