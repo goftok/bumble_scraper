@@ -17,8 +17,9 @@ from image import process_image
 
 load_dotenv()
 
-VERSION = "0.2.0"
-LIMIT = 100
+VERSION = "0.3.0"
+LIMIT = 10000
+DEV = False
 console = Console()
 
 # Get the path to the chromedriver executable
@@ -54,7 +55,7 @@ if not os.path.exists(data_folder_path):
     os.makedirs(data_folder_path)
 
 # Specify the database file within the 'data' folder
-db_file_path = os.path.join(data_folder_path, "database.db")
+db_file_path = os.path.join(data_folder_path, "database0.3.0.db")
 cookies_file_path = os.path.join(data_folder_path, "cookies.json")
 
 # Create a session
@@ -79,169 +80,185 @@ gender_enum = Gender(gender_value)
 Some issues with the code (Probelm 1). When we trying to get the image urls, we are getting additional
 urla from the previous iteration. TODO
 """
-prev_url = []
-image_urls = []
+prev_url = set()
+image_urls = set()
+continue_running = True
 
-
-while LIMIT > 0:
-    # wait for the page to load
-    console.print("Starting to process number " + str(LIMIT), style="bold green")
-
-    driver.implicitly_wait(2)
-
-    body = driver.find_element(By.TAG_NAME, "body")
-    for i in range(6):
-        time.sleep(0.5)
-        body.send_keys(Keys.ARROW_DOWN)
-
-    prev_url = image_urls
-    image_urls = []
-
-    images_divs = driver.find_elements(By.CLASS_NAME, value="media-box__picture-image")
-
-    # Iterate over each story element and find images within
-    for image_div in images_divs:
-        src = image_div.get_attribute("src")
-        # TODO (Probelm 1)
-        if src not in prev_url:
-            image_urls.append(src)
-
-    name, age, city, education, occupation, description, verification = None, None, None, None, None, None, None
-
-    # Extracting name
-    name_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__name")
-    if name_elements:
-        name = name_elements[0].get_attribute("textContent")
-    else:
-        # console.print("No elements found with the specified class name.", style="bold yellow")
-        pass
-
-    # Extracting age
-    age_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__age")
-    if age_elements:
-        age_text = age_elements[0].get_attribute("textContent")
-
-        if "," in age_text:
-            age = age_text.replace(",", "")
-    else:
-        # console.print("No elements found with the specified class age.", style="bold yellow")
-        pass
-
-    # Extracting city information
-    city_elements = driver.find_elements(By.CSS_SELECTOR, ".location-widget__town")
-    if city_elements:
-        city = city_elements[0].get_attribute("textContent")
-    else:
-        # console.print("No elements found with the specified class city.", style="bold yellow")
-        pass
-
-    # Extracting education information
-    education_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__education")
-    if education_elements:
-        education = education_elements[0].get_attribute("textContent")
-    else:
-        # console.print("No elements found with the specified class education.", style="bold yellow")
-        pass
-
-    # Extracting occupation information
-    occupation_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__occupation")
-    if occupation_elements:
-        occupation = occupation_elements[0].get_attribute("textContent")
-    else:
-        # console.print("No elements found with the specified class occupation.", style="bold yellow")
-        pass
-
-    # Extracitnd description
-    description_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__text")
-    if description_elements:
-        description = description_elements[0].get_attribute("textContent")
-    else:
-        # console.print("No elements found with the specified class description.", style="bold yellow")
-        pass
-
-    # Extracting verification
-    verification_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-profile__verification")
-    if verification_elements:
-        verification = True
-    else:
-        verification = False
-        # console.print("No elements found with the specified class verification.", style="bold yellow")
-        pass
-
-    # Extract badges
-    badge_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__badge")
-    badge_info = []
-
-    # Iterate over each badge element
-    for badge in badge_elements:
-        # Find the image within the badge and get its 'alt' attribute
-        image = badge.find_element(By.CLASS_NAME, "pill__image")
-        image_alt = image.get_attribute("alt")
-        image_src = image.get_attribute("src")
-
-        # Add the extracted information to the list
-        badge_info.append({"image_src": image_src, "image_alt": image_alt})
-
-    if not badge_info:
-        # console.print("No badges found.", style="bold red")
-        pass
-
-    badge_info_json = json.dumps(badge_info)
-
-    # Add new main information record
-    new_record = MainInformationModel(
-        gender=gender_enum,
-        name=name,
-        age=age,
-        city=city,
-        education=education,
-        occupation=occupation,
-        description=description,
-        verification=verification,
-        badges=badge_info_json,
-        script_version=VERSION,
-    )
-
-    session.add(new_record)
-    session.commit()
-
-    # Now new_record has an id assigned by the database
-    main_info_id = new_record.id
-
-    for img_url in image_urls:
-        try:
-            proccessed_image = process_image(img_url)
-
-            if proccessed_image:
-                image_record = ImagesModel(
-                    main_info_id=main_info_id,
-                    image_data=proccessed_image,
-                    image_link=img_url,
-                )
-
-                session.add(image_record)
-            else:
-                console.print(f"Error fetching image from {img_url}", style="bold red")
-
-        except requests.RequestException as e:
-            console.print(f"Error fetching image from {img_url}: {e}", style="bold red")
-
-    session.commit()
-
-    # input("Press enter to continue...")
-
-    # Click the button
+while LIMIT > 0 and continue_running:
     try:
-        button = driver.find_element(By.CSS_SELECTOR, "[data-qa-role='encounters-action-dislike']")
-        button.click()
-    except NoSuchElementException:
-        input("No button found. Press enter to continue...")
+        # wait for the page to load
+        console.print("Starting to process number " + str(LIMIT), style="bold green")
 
-    # if input("Press q to quit, any other key to continue: ") == "q":
-    #     break
+        driver.implicitly_wait(2)
 
-    LIMIT -= 1
+        body = driver.find_element(By.TAG_NAME, "body")
+        for i in range(6):
+            time.sleep(0.5)
+            body.send_keys(Keys.ARROW_DOWN)
 
+        prev_url = image_urls
+        image_urls = set()
+
+        images_divs = driver.find_elements(By.CLASS_NAME, value="media-box__picture-image")
+
+        # Iterate over each story element and find images within
+        for image_div in images_divs:
+            src = image_div.get_attribute("src")
+            # TODO (Probelm 1)
+            if src not in prev_url:
+                image_urls.add(src)
+
+        name = None
+        age = None
+        city = None
+        lives_in = None
+        from_ = None
+        education = None
+        occupation = None
+        description = None
+        verification = None
+        badge_info = []
+
+        # Extracting name
+        name_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__name")
+        if name_elements:
+            name = name_elements[0].get_attribute("textContent")
+        else:
+            console.print("NOT FOUND name.", style="bold yellow") if DEV else None
+
+        # Extracting age
+        age_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__age")
+        if age_elements:
+            age_text = age_elements[0].get_attribute("textContent")
+            # Remove the comma from the age
+            age = age_text.replace(",", "")
+        else:
+            console.print("NOT FOUND age.", style="bold yellow") if DEV else None
+
+        # Extracting city information
+        city_elements = driver.find_elements(By.CSS_SELECTOR, ".location-widget__town")
+        if city_elements:
+            city = city_elements[0].get_attribute("textContent")
+        else:
+            console.print("NOT FOUND city.", style="bold yellow") if DEV else None
+
+        # Extracting education information
+        education_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__education")
+        if education_elements:
+            education = education_elements[0].get_attribute("textContent")
+        else:
+            console.print("NOT FOUND education.", style="bold yellow") if DEV else None
+
+        # Extracting occupation information
+        occupation_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__occupation")
+        if occupation_elements:
+            occupation = occupation_elements[0].get_attribute("textContent")
+        else:
+            console.print("NOT FOUND occupation.", style="bold yellow") if DEV else None
+
+        # Extracitnd description
+        description_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__text")
+        if description_elements:
+            description = description_elements[0].get_attribute("textContent")
+        else:
+            console.print("NOT FOUND description.", style="bold yellow") if DEV else None
+
+        # Extracting verification
+        verification_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-profile__verification")
+        if verification_elements:
+            verification = True
+        else:
+            verification = False
+            console.print("NOT FOUND verification.", style="bold yellow") if DEV else None
+
+        pill_titles = driver.find_elements(By.CLASS_NAME, "pill__title")
+        for title in pill_titles:
+            text = title.get_attribute("textContent")
+            if "Lives in" in text:
+                lives_in = text.replace("Lives in ", "")
+            if "From" in text:
+                from_ = text.replace("From ", "")
+
+        console.print("NOT FOUND lives_in.", style="bold yellow") if DEV and not lives_in else None
+
+        # Extract badges
+        badge_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__badge")
+
+        # Iterate over each badge element
+        for badge in badge_elements:
+            # Find the image within the badge and get its 'alt' attribute
+            image = badge.find_element(By.CLASS_NAME, "pill__image")
+            image_alt = image.get_attribute("alt")
+            image_src = image.get_attribute("src")
+
+            # Add the extracted information to the list
+            badge_info.append({"image_src": image_src, "image_alt": image_alt})
+
+        if not badge_info:
+            console.print("No badges found.", style="bold red") if DEV else None
+
+        badge_info_json = json.dumps(badge_info)
+
+        # Add new main information record
+        new_record = MainInformationModel(
+            gender=gender_enum,
+            name=name,
+            age=age,
+            city=city,
+            lives_in=lives_in,
+            from_=from_,
+            education=education,
+            occupation=occupation,
+            description=description,
+            verification=verification,
+            badges=badge_info_json,
+            script_version=VERSION,
+        )
+
+        session.add(new_record)
+        session.commit()
+
+        # Now new_record has an id assigned by the database
+        main_info_id = new_record.id
+
+        for img_url in image_urls:
+            try:
+                proccessed_image = process_image(img_url)
+
+                if proccessed_image:
+                    image_record = ImagesModel(
+                        main_info_id=main_info_id,
+                        image_data=proccessed_image,
+                        image_link=img_url,
+                    )
+
+                    session.add(image_record)
+                else:
+                    console.print(f"Error fetching image from {img_url}", style="bold red")
+
+            except requests.RequestException as e:
+                console.print(f"Error fetching image from {img_url}: {e}", style="bold red")
+
+        session.commit()
+
+        input("Press enter to continue...") if DEV else None
+
+        # Click the button
+        try:
+            button = driver.find_element(By.CSS_SELECTOR, "[data-qa-role='encounters-action-dislike']")
+            button.click()
+        except NoSuchElementException:
+            input("No button found. Press enter to continue...")
+
+        if DEV and input("Press q to quit, any other key to continue: ") == "q":
+            break
+
+        LIMIT -= 1
+
+    except KeyboardInterrupt:
+        # This block executes when a KeyboardInterrupt (Ctrl+C) occurs
+        print("Interrupt received, stopping...")
+        continue_running = False
 
 # Save the cookies
 save_cookies(driver, cookies_file_path)
