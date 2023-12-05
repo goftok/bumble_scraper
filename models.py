@@ -31,8 +31,19 @@ class MainInformationModel(main_base):
     education = Column(String(255))
     occupation = Column(String(255))
     description = Column(Text)
-    badges = Column(Text)
     verification = Column(Boolean)
+    height_badge = Column(String(255))
+    exercise_badges = Column(String(255))
+    education_badge = Column(String(255))
+    drinking_badge = Column(String(255))
+    smoking_badge = Column(String(255))
+    intentions_badge = Column(String(255))
+    family_plans_badge = Column(String(255))
+    star_sign_badge = Column(String(255))
+    political_badge = Column(String(255))
+    religion_badge = Column(String(255))
+    cannabis_badge = Column(String(255))
+    gender_badge = Column(String(255))
     script_version = Column(String(255))
     extraction_timestamp = Column(DateTime, default=func.now())
 
@@ -64,7 +75,11 @@ def get_session(main_path: str, image_path: str) -> sessionmaker:
     image_base.metadata.create_all(image_engine)
 
     # Create a session
-    main_session = sessionmaker(bind=main_engine)
-    image_session = sessionmaker(bind=image_engine)
+    main_Session = sessionmaker(bind=main_engine)
+    image_Session = sessionmaker(bind=image_engine)
+
+    # Return the session
+    main_session = main_Session()
+    image_session = image_Session()
 
     return main_session, image_session

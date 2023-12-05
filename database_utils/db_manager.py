@@ -17,7 +17,7 @@ class DatabaseManager:
                 image_data = process_image(url)
 
                 if not image_data:
-                    logging.error(f"Error fetching image from {url}", style="bold red")
+                    logging.error(f"Error fetching image from {url}")
                     continue
 
                 new_record = ImagesModel(
@@ -30,10 +30,12 @@ class DatabaseManager:
                 self.image_session.commit()
 
             except Exception as e:
-                logging.error(f"Error fetching image from {url}: {e}", style="bold red")
+                logging.error(f"Error fetching image from {url}: {e}")
 
     def save_profile(self, gender_value: int) -> None:
         gender_enum = Gender(gender_value)
+
+        badges = self.profile_processor.get_badges()
 
         # Add new main information record
         new_record = MainInformationModel(
@@ -47,7 +49,18 @@ class DatabaseManager:
             occupation=self.profile_processor.get_occupation(),
             description=self.profile_processor.get_description(),
             verification=self.profile_processor.get_verification(),
-            badges=self.profile_processor.get_badges(),
+            height_badge=badges["height"],
+            exercise_badges=badges["exercise"],
+            education_badge=badges["education"],
+            drinking_badge=badges["drinking"],
+            smoking_badge=badges["smoking"],
+            intentions_badge=badges["intentions"],
+            family_plans_badge=badges["family_plans"],
+            star_sign_badge=badges["star_sign"],
+            political_badge=badges["politics"],
+            religion_badge=badges["religion"],
+            cannabis_badge=badges["cannabis"],
+            gender_badge=badges["gender"],
             script_version=self.config["version"],
         )
 
@@ -55,7 +68,3 @@ class DatabaseManager:
         self.main_session.commit()
 
         self._save_images(new_record.id)
-
-    def close_sessions(self):
-        self.main_session.close()
-        self.image_session.close()

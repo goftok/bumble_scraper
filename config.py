@@ -5,8 +5,8 @@ load_dotenv()
 
 config = {
     "dev": False,
-    "version": "0.4.0",
-    "limit": 964,
+    "version": "0.4.1",
+    "limit": 100,
     "scroll_times": 6,
     "scroll_sleep_time": 0.30,
     "implicitly_wait": 1,

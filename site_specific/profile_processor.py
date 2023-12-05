@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from db_bot.utils.logging import logging
+from db_bot.site_specific.badges_dict import badges_dict
 
 
 class ProfileProcessor:
@@ -21,7 +22,7 @@ class ProfileProcessor:
             if name_elements:
                 return name_elements[0].get_attribute("textContent")
             else:
-                logging.warning("Name not found.")
+                logging.warning("Name not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_name: {e}")
@@ -31,9 +32,12 @@ class ProfileProcessor:
         try:
             age_elements = self.driver.find_elements(By.CLASS_NAME, "encounters-story-profile__age")
             if age_elements:
-                return int(age_elements[0].get_attribute("textContent"))
+                age = age_elements[0].get_attribute("textContent")
+                # site specific
+                age = age.replace(",", "")
+                return int(age)
             else:
-                logging.warning("Age not found.")
+                logging.warning("Age not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_age: {e}")
@@ -45,7 +49,7 @@ class ProfileProcessor:
             if city_elements:
                 return city_elements[0].get_attribute("textContent")
             else:
-                logging.warning("City not found.")
+                logging.warning("City not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_city: {e}")
@@ -57,7 +61,7 @@ class ProfileProcessor:
             if education_elements:
                 return education_elements[0].get_attribute("textContent")
             else:
-                logging.warning("Education not found.")
+                logging.warning("Education not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_education: {e}")
@@ -69,7 +73,7 @@ class ProfileProcessor:
             if occupation_elements:
                 return occupation_elements[0].get_attribute("textContent")
             else:
-                logging.warning("Occupation not found.")
+                logging.warning("Occupation not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_occupation: {e}")
@@ -81,7 +85,7 @@ class ProfileProcessor:
             if description_elements:
                 return description_elements[0].get_attribute("textContent")
             else:
-                logging.warning("Description not found.")
+                logging.warning("Description not found.") if self.config["dev"] else None
                 return None
         except Exception as e:
             logging.error(f"Error in get_description: {e}")
@@ -100,7 +104,7 @@ class ProfileProcessor:
                 if "Lives in" in text:
                     lives_in_ = text.replace("Lives in ", "")
             if lives_in_ is None:
-                logging.warning("Lives in not found.")
+                logging.warning("Lives in not found.") if self.config["dev"] else None
             return lives_in_
         except Exception as e:
             logging.error(f"Error in lives_in_: {e}")
@@ -115,7 +119,7 @@ class ProfileProcessor:
                 if "From" in text:
                     from_ = text.replace("From ", "")
             if from_ is None:
-                logging.warning("From not found.")
+                logging.warning("From not found.") if self.config["dev"] else None
             return from_
         except Exception as e:
             logging.error(f"Error in get_from_: {e}")
@@ -124,14 +128,14 @@ class ProfileProcessor:
     def get_images(self) -> list[str]:
         image_urls = set()
         try:
-            image_elements = self.driver.find_elements(By.CLASS_NAME, "encounters-story-profile__image")
+            image_elements = self.driver.find_elements(By.CLASS_NAME, "media-box__picture-image")
             for image in image_elements:
                 src = image.get_attribute("src")
                 if src not in self.prev_url:
                     image_urls.add(src)
 
             if not image_urls:
-                logging.warning("No images found.")
+                logging.warning("No images found.") if self.config["dev"] else None
 
             self.prev_url = image_urls
             return list(image_urls)
@@ -141,21 +145,43 @@ class ProfileProcessor:
             self.prev_url = image_urls
             return list(image_urls)
 
-    def get_badges(self) -> str:
-        badge_info = []
+    def get_badges(self) -> dict:
+        badge_info = {
+            "height": None,
+            "exercise": None,
+            "education": None,
+            "drinking": None,
+            "smoking": None,
+            "intentions": None,
+            "family_plans": None,
+            "star_sign": None,
+            "politics": None,
+            "religion": None,
+            "cannabis": None,
+            "gender": None,
+        }
+
+        if len(badge_info) != len(badges_dict):
+            raise ValueError("badges_dict and badge_info must have the same length.")
+
         try:
             badge_elements = self.driver.find_elements(By.CLASS_NAME, "encounters-story-about__badge")
             for badge in badge_elements:
                 image = badge.find_element(By.CLASS_NAME, "pill__image")
+                image_src = image.get_attribute("src").split("/")[-1]
                 image_alt = image.get_attribute("alt")
-                image_src = image.get_attribute("src")
-                badge_info.append({"image_src": image_src, "image_alt": image_alt})
-            if not badge_info:
-                logging.warning("No badges found.")
-            return json.dumps(badge_info)
+
+                if image_src not in badges_dict:
+                    logging.error(f"Unknown badge: {image_alt}")
+                else:
+                    badge_info[badges_dict[image_src]] = image_alt
+
+            if not any(badge_info.values()):
+                logging.warning("No badges found.") if self.config["dev"] else None
+            return badge_info
         except Exception as e:
             logging.error(f"Error in get_badges: {e}")
-            return json.dumps(badge_info)
+            return badge_info
 
     def click_button(self) -> None:
         try:
