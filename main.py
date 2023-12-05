@@ -17,10 +17,16 @@ from image import process_image
 
 load_dotenv()
 
-VERSION = "0.3.0"
-LIMIT = 10000
-DEV = False
 console = Console()
+
+config = {
+    "dev": False,
+    "version": "0.3.1",
+    "limit": 964,
+    "arrow_down": 6,
+    "implicitly_wait": 1,
+    "time_sleep": 0.30,
+}
 
 # Get the path to the chromedriver executable
 chrome_driver_path = os.getenv("CHROME_DRIVER_PATH")
@@ -84,23 +90,22 @@ prev_url = set()
 image_urls = set()
 continue_running = True
 
-while LIMIT > 0 and continue_running:
+while config["limit"] > 0 and continue_running:
     try:
         # wait for the page to load
-        console.print("Starting to process number " + str(LIMIT), style="bold green")
+        console.print("Starting to process number " + str(config["limit"]), style="bold green")
 
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(config["implicitly_wait"])
 
         body = driver.find_element(By.TAG_NAME, "body")
-        for i in range(6):
-            time.sleep(0.5)
+        for i in range(config["arrow_down"]):
+            time.sleep(config["time_sleep"])
             body.send_keys(Keys.ARROW_DOWN)
 
         prev_url = image_urls
         image_urls = set()
 
         images_divs = driver.find_elements(By.CLASS_NAME, value="media-box__picture-image")
-
         # Iterate over each story element and find images within
         for image_div in images_divs:
             src = image_div.get_attribute("src")
@@ -124,7 +129,7 @@ while LIMIT > 0 and continue_running:
         if name_elements:
             name = name_elements[0].get_attribute("textContent")
         else:
-            console.print("NOT FOUND name.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND name.", style="bold yellow") if config["dev"] else None
 
         # Extracting age
         age_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__age")
@@ -133,35 +138,35 @@ while LIMIT > 0 and continue_running:
             # Remove the comma from the age
             age = age_text.replace(",", "")
         else:
-            console.print("NOT FOUND age.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND age.", style="bold yellow") if config["dev"] else None
 
         # Extracting city information
         city_elements = driver.find_elements(By.CSS_SELECTOR, ".location-widget__town")
         if city_elements:
             city = city_elements[0].get_attribute("textContent")
         else:
-            console.print("NOT FOUND city.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND city.", style="bold yellow") if config["dev"] else None
 
         # Extracting education information
         education_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__education")
         if education_elements:
             education = education_elements[0].get_attribute("textContent")
         else:
-            console.print("NOT FOUND education.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND education.", style="bold yellow") if config["dev"] else None
 
         # Extracting occupation information
         occupation_elements = driver.find_elements(By.CSS_SELECTOR, ".encounters-story-profile__occupation")
         if occupation_elements:
             occupation = occupation_elements[0].get_attribute("textContent")
         else:
-            console.print("NOT FOUND occupation.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND occupation.", style="bold yellow") if config["dev"] else None
 
         # Extracitnd description
         description_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__text")
         if description_elements:
             description = description_elements[0].get_attribute("textContent")
         else:
-            console.print("NOT FOUND description.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND description.", style="bold yellow") if config["dev"] else None
 
         # Extracting verification
         verification_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-profile__verification")
@@ -169,7 +174,7 @@ while LIMIT > 0 and continue_running:
             verification = True
         else:
             verification = False
-            console.print("NOT FOUND verification.", style="bold yellow") if DEV else None
+            console.print("NOT FOUND verification.", style="bold yellow") if config["dev"] else None
 
         pill_titles = driver.find_elements(By.CLASS_NAME, "pill__title")
         for title in pill_titles:
@@ -179,7 +184,7 @@ while LIMIT > 0 and continue_running:
             if "From" in text:
                 from_ = text.replace("From ", "")
 
-        console.print("NOT FOUND lives_in.", style="bold yellow") if DEV and not lives_in else None
+        console.print("NOT FOUND lives_in.", style="bold yellow") if config["dev"] and not lives_in else None
 
         # Extract badges
         badge_elements = driver.find_elements(By.CLASS_NAME, "encounters-story-about__badge")
@@ -195,7 +200,7 @@ while LIMIT > 0 and continue_running:
             badge_info.append({"image_src": image_src, "image_alt": image_alt})
 
         if not badge_info:
-            console.print("No badges found.", style="bold red") if DEV else None
+            console.print("No badges found.", style="bold red") if config["dev"] else None
 
         badge_info_json = json.dumps(badge_info)
 
@@ -212,7 +217,7 @@ while LIMIT > 0 and continue_running:
             description=description,
             verification=verification,
             badges=badge_info_json,
-            script_version=VERSION,
+            script_version=config["version"],
         )
 
         session.add(new_record)
@@ -241,7 +246,7 @@ while LIMIT > 0 and continue_running:
 
         session.commit()
 
-        input("Press enter to continue...") if DEV else None
+        input("Press enter to continue...") if config["dev"] else None
 
         # Click the button
         try:
@@ -250,10 +255,10 @@ while LIMIT > 0 and continue_running:
         except NoSuchElementException:
             input("No button found. Press enter to continue...")
 
-        if DEV and input("Press q to quit, any other key to continue: ") == "q":
+        if config["dev"] and input("Press q to quit, any other key to continue: ") == "q":
             break
 
-        LIMIT -= 1
+        config["limit"] -= 1
 
     except KeyboardInterrupt:
         # This block executes when a KeyboardInterrupt (Ctrl+C) occurs
