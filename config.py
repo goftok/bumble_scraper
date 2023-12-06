@@ -4,17 +4,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 config = {
-    "dev": False,
-    "version": "0.4.1",
-    "limit": 100,
-    "scroll_times": 6,
-    "scroll_sleep_time": 0.30,
-    "implicitly_wait": 1,
-    "main_db_name": "data/main.db",
-    "image_db_name": "data/image.db",
-    "cookies_file_name": "data/cookies.json",
-    "chrome_driver_path": os.getenv("CHROME_DRIVER_PATH"),
-    "chrome_path": os.getenv("CHROME_PATH"),
-    "profile_name": os.getenv("PROFILE_NAME"),
-    "bumble_path": r"https://bumble.com/",
+    "dev": False,  # True if you want to run the bot in dev mode
+    "version": "0.4.1",  # Version of the bot
+    "limit": 100,  # Number of profiles to swipe
+    "scroll_times": 6,  # Number of times to scroll down (for loading images)
+    "scroll_sleep_time": 0.30,  # Time to sleep between scrolls
+    "implicitly_wait": 1,  # Time to wait for the page to load
+    "main_db_name": "data/main.db",  # Name of the main database
+    "image_db_name": "data/image.db",  # Name of the image database
+    "cookies_file_name": "data/cookies.json",  # Name of the cookies file
+    "chrome_driver_path": os.getenv("CHROME_DRIVER_PATH"),  # Path to the chrome driver
+    "chrome_path": os.getenv("CHROME_PATH"),  # Path to chrome
+    "profile_name": os.getenv("PROFILE_NAME"),  # Name of the chrome profile
+    "bumble_path": r"https://bumble.com/",  # Bumble URL
 }
