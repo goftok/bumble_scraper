@@ -58,5 +58,5 @@ class BumbleBot:
                 logging.error(f"Error fetching profile:")
                 continue_running = False
 
-        self.driver_manager.save_cookies(self.cookies_path)
+        # self.driver_manager.save_cookies(self.cookies_path)
         self.driver_manager.close_driver()

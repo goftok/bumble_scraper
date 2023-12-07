@@ -5,8 +5,8 @@ load_dotenv()
 
 config = {
     "dev": False,  # True if you want to run the bot in dev mode
-    "version": "0.4.1",  # Version of the bot
-    "limit": 100,  # Number of profiles to swipe
+    "version": "0.4.3",  # Version of the bot
+    "limit": 10000,  # Number of profiles to swipe
     "scroll_times": 6,  # Number of times to scroll down (for loading images)
     "scroll_sleep_time": 0.30,  # Time to sleep between scrolls
     "implicitly_wait": 1,  # Time to wait for the page to load

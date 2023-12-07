@@ -35,6 +35,10 @@ class DatabaseManager:
     def save_profile(self, gender_value: int) -> None:
         gender_enum = Gender(gender_value)
 
+        if self.profile_processor.is_finish():
+            logging.error("Out of profiles")
+            return
+
         badges = self.profile_processor.get_badges()
 
         # Add new main information record
