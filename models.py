@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, Column
 from sqlalchemy import Integer, String, Text, BLOB, ForeignKey, Index, Enum, Boolean, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker
 
 # Define the base class
 main_base = declarative_base()

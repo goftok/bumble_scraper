@@ -185,16 +185,10 @@ class ProfileProcessor:
 
     def is_finish(self) -> bool:
         try:
-            box_texts = self.driver.find_elements(By.CLASS_NAME, "cta-box__text")
-            for box_text in box_texts:
-                if (
-                    "Come back later or try adjusting your filters to see more amazing bees in your area."
-                    in box_text.get_attribute("textContent")
-                ):
-                    return True
+            self.driver.find_element(By.CSS_SELECTOR, "[data-qa-role='encounters-action-dislike']")
             return False
         except NoSuchElementException:
-            return False
+            return True
 
     def click_button(self) -> None:
         try:

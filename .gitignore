@@ -164,3 +164,5 @@ cython_debug/
 .DS_Store
 *.db
 cookies.json
+*.zip
+*.png

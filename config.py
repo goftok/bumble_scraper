@@ -8,8 +8,8 @@ config = {
     "version": "0.4.3",  # Version of the bot
     "limit": 10000,  # Number of profiles to swipe
     "scroll_times": 6,  # Number of times to scroll down (for loading images)
-    "scroll_sleep_time": 0.30,  # Time to sleep between scrolls
-    "implicitly_wait": 1,  # Time to wait for the page to load
+    "scroll_sleep_time": 0.40,  # Time to sleep between scrolls
+    "implicitly_wait": 2,  # Time to wait for the page to load
     "main_db_name": "data/main.db",  # Name of the main database
     "image_db_name": "data/image.db",  # Name of the image database
     "cookies_file_name": "data/cookies.json",  # Name of the cookies file
